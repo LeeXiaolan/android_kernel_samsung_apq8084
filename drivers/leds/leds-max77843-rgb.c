@@ -143,7 +143,6 @@ static int max77843_rgb_number(struct led_classdev *led_cdev,
 
 	for (i = 0; i < 4; i++) {
 		if (led_cdev == &max77843_rgb->led[i]) {
-			pr_info("leds-max77843-rgb: %s, %d\n", __func__, i);
 			return i;
 		}
 	}
@@ -207,8 +206,6 @@ static void max77843_rgb_set_state(struct led_classdev *led_cdev,
 	int n;
 	int ret;
 
-	pr_info("leds-max77843-rgb: %s\n", __func__);
-
 	ret = max77843_rgb_number(led_cdev, &max77843_rgb);
 
 	if (IS_ERR_VALUE(ret)) {
@@ -238,8 +235,6 @@ static unsigned int max77843_rgb_get(struct led_classdev *led_cdev)
 	int n;
 	int ret;
 	u8 value;
-
-	pr_info("leds-max77843-rgb: %s\n", __func__);
 
 	ret = max77843_rgb_number(led_cdev, &max77843_rgb);
 	if (IS_ERR_VALUE(ret)) {
@@ -278,8 +273,6 @@ static int max77843_rgb_ramp(struct device *dev, int ramp_up, int ramp_down)
 	int value;
 	int ret;
 
-	pr_info("leds-max77843-rgb: %s\n", __func__);
-
 	if (ramp_up <= 800) {
 		ramp_up /= 100;
 	} else {
@@ -311,8 +304,6 @@ static int max77843_rgb_blink(struct device *dev,
 	struct max77843_rgb *max77843_rgb = dev_get_drvdata(dev);
 	int value;
 	int ret = 0;
-
-	pr_info("leds-max77843-rgb: %s\n", __func__);
 
 	value = (LEDBLNK_ON(delay_on) << 4) | LEDBLNK_OFF(delay_off);
 	ret = max77843_write_reg(max77843_rgb->i2c,
@@ -374,7 +365,6 @@ static void max77843_rgb_reset(struct device *dev)
 
 void max77843_rgb_off(void)
 {
-	pr_info("leds-max77843-rgb: all leds off\n");
 	max77843_rgb_reset(max77843led_dev);
 }
 EXPORT_SYMBOL(max77843_rgb_off);
@@ -401,8 +391,6 @@ static ssize_t store_max77843_rgb_lowpower(struct device *dev,
 		else
 			led_dynamic_current = BASE_DYNAMIC_LED_CURRENT;
 	}
-	pr_info("led_lowpower mode set to %i, led_dynamic_current set to %d\n", led_lowpower, led_dynamic_current);
-	dev_dbg(dev, "led_lowpower mode set to %i\n", led_lowpower);
 
 	return count;
 }
@@ -412,7 +400,6 @@ static ssize_t store_max77843_rgb_brightness(struct device *dev,
 {
 	int ret;
 	u8 brightness;
-	pr_info("leds-max77843-rgb: %s\n", __func__);
 
 	ret = kstrtou8(buf, 0, &brightness);
 	if (ret != 0) {
@@ -427,8 +414,6 @@ static ssize_t store_max77843_rgb_brightness(struct device *dev,
 
 	led_dynamic_current = brightness;
 
-	dev_dbg(dev, "led brightness set to %i\n", brightness);
-
 	return count;
 }
 
@@ -439,7 +424,6 @@ static ssize_t store_max77843_rgb_pattern(struct device *dev,
 	struct max77843_rgb *max77843_rgb = dev_get_drvdata(dev);
 	unsigned int mode = 0;
 	int ret;
-	pr_info("leds-max77843-rgb: %s, lowpower_mode : %d\n", __func__,led_lowpower_mode);
 
 	ret = sscanf(buf, "%1d", &mode);
 	if (ret == 0) {
@@ -532,9 +516,6 @@ static ssize_t store_max77843_rgb_blink(struct device *dev,
 	/*Set LED blink mode*/
 	max77843_rgb_blink(dev, delay_on_time, delay_off_time);
 
-	pr_info("leds-max77843-rgb: %s\n", __func__);
-	dev_dbg(dev, "led_blink is called, Color:0x%X Brightness:%i\n",
-			led_brightness, led_dynamic_current);
 	return count;
 }
 
@@ -557,7 +538,6 @@ static ssize_t store_led_r(struct device *dev,
 		max77843_rgb_set_state(&max77843_rgb->led[RED], LED_OFF, LED_DISABLE);
 	}
 out:
-	pr_info("leds-max77843-rgb: %s\n", __func__);
 	return count;
 }
 static ssize_t store_led_g(struct device *dev,
@@ -579,7 +559,6 @@ static ssize_t store_led_g(struct device *dev,
 		max77843_rgb_set_state(&max77843_rgb->led[GREEN], LED_OFF, LED_DISABLE);
 	}
 out:
-	pr_info("leds-max77843-rgb: %s\n", __func__);
 	return count;
 }
 static ssize_t store_led_b(struct device *dev,
@@ -601,7 +580,6 @@ static ssize_t store_led_b(struct device *dev,
 		max77843_rgb_set_state(&max77843_rgb->led[BLUE], LED_OFF, LED_DISABLE);
 	}
 out:
-	pr_info("leds-max77843-rgb: %s\n", __func__);
 	return count;
 }
 
@@ -686,7 +664,6 @@ static ssize_t led_blink_store(struct device *dev,
 		max77843_rgb->delay_off_times_ms);
 	max77843_rgb_set_state(&max77843_rgb_num->led[n], led_dynamic_current, LED_BLINK);
 
-	pr_info("leds-max77843-rgb: %s\n", __func__);
 	return count;
 }
 

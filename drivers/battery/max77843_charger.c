@@ -98,16 +98,6 @@ static void check_charger_unlock_state(struct max77843_charger_data *charger)
 	}
 }
 
-static void max77843_test_read(struct max77843_charger_data *charger)
-{
-	u8 data = 0;
-	u32 addr = 0;
-	for (addr = 0xB1; addr <= 0xC3; addr++) {
-		max77843_read_reg(charger->i2c, addr, &data);
-		pr_debug("MAX77843 addr : 0x%02x data : 0x%02x\n", addr, data);
-	}
-}
-
 static int max77843_get_vbus_state(struct max77843_charger_data *charger)
 {
 	u8 reg_data;
@@ -159,7 +149,6 @@ static int max77843_get_vbus_state(struct max77843_charger_data *charger)
 			__func__);
 		break;
 	case 0x03:
-		pr_debug("%s: VBUS is valid. CHGIN < CHGIN_OVLO", __func__);
 		break;
 	default:
 		break;
@@ -175,8 +164,6 @@ static int max77843_get_charger_state(struct max77843_charger_data *charger)
 
 	max77843_read_reg(charger->i2c,
 			  MAX77843_CHG_REG_DETAILS_01, &reg_data);
-
-	pr_debug("%s : charger status (0x%02x)\n", __func__, reg_data);
 
 	reg_data &= 0x0f;
 
@@ -225,7 +212,6 @@ static int max77843_get_charging_health(struct max77843_charger_data *charger)
 			  MAX77843_CHG_REG_DETAILS_01, &reg_data);
 	reg_data = ((reg_data & MAX77843_BAT_DTLS) >> MAX77843_BAT_DTLS_SHIFT);
 
-	pr_debug("%s: reg_data(0x%x)\n", __func__, reg_data);
 	switch (reg_data) {
 	case 0x00:
 		pr_info("%s: No battery and the charger is suspended\n",
@@ -298,7 +284,6 @@ static int max77843_get_charging_health(struct max77843_charger_data *charger)
 			max77843_set_charger_state(charger, 1);
 		}
 
-		pr_debug("%s: vbus_state : 0x%d, chg_dtls : 0x%d\n", __func__, vbus_state, chg_dtls);
 		/*  OVP is higher priority */
 		if (vbus_state == 0x02) { /*  CHGIN_OVLO */
 			pr_debug("%s: vbus ovp\n", __func__);
@@ -328,8 +313,6 @@ static int max77843_get_charging_health(struct max77843_charger_data *charger)
 			state = POWER_SUPPLY_HEALTH_UNDERVOLTAGE;
 		}
 	}
-
-	max77843_test_read(charger);
 
 	return (int)state;
 }
@@ -960,17 +943,6 @@ static void max77843_charger_function_control(
 				set_charging_current_max);
 		}
 	}
-
-	pr_debug("charging = %d, fc = %d, il = %d, t1 = %d, t2 = %d, cable = %d\n",
-		charger->is_charging,
-		charger->charging_current,
-		charger->charging_current_max,
-		charger->pdata->charging_current[charger->cable_type].full_check_current_1st,
-		charger->pdata->charging_current[charger->cable_type].full_check_current_2nd,
-		charger->cable_type);
-
-	max77843_test_read(charger);
-
 }
 
 static void max77843_charger_initialize(struct max77843_charger_data *charger)
@@ -1029,8 +1001,6 @@ static void max77843_charger_initialize(struct max77843_charger_data *charger)
 	/* Watchdog Enable */
 	max77843_update_reg(charger->i2c, MAX77843_CHG_REG_CNFG_00,
 				MAX77843_WDTEN, MAX77843_WDTEN);
-
-	max77843_test_read(charger);
 }
 
 #if defined(CONFIG_BATTERY_SWELLING)
@@ -1062,7 +1032,6 @@ static int max77843_get_float_voltage(struct max77843_charger_data *charger)
 
 		float_voltage = reg_data * 25 + 3650;
 	}
-	pr_debug("%s: battery cv voltage 0x%x, chg_float_voltage = %dmV \n", __func__, reg_data, float_voltage);
 	return float_voltage;
 }
 

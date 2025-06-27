@@ -39,6 +39,9 @@ static enum power_supply_property max77843_fuelgauge_props[] = {
 	POWER_SUPPLY_PROP_ENERGY_FULL,
 };
 
+// This only stops the driver printing lots of debug message.
+#define CONFIG_SEC_FACTORY
+
 #if !defined(CONFIG_SEC_FACTORY)
 static void max77843_fg_read_time(struct max77843_fuelgauge_data *fuelgauge)
 {
@@ -185,10 +188,6 @@ static int max77843_fg_read_vcell(struct max77843_fuelgauge_data *fuelgauge)
 	temp2 = temp / 1000000;
 	vcell += (temp2 << 4);
 
-	if (!(fuelgauge->info.pr_cnt % PRINT_COUNT))
-		pr_info("%s: VCELL(%d), data(0x%04x)\n",
-			__func__, vcell, (data[1]<<8) | data[0]);
-
 	return vcell;
 }
 
@@ -304,10 +303,6 @@ static int max77843_fg_read_temp(struct max77843_fuelgauge_data *fuelgauge)
 		}
 	} else
 		temper = 20000;
-
-	if (!(fuelgauge->info.pr_cnt % PRINT_COUNT))
-		pr_info("%s: TEMPERATURE(%d), data(0x%04x)\n",
-			__func__, temper, (data[1]<<8) | data[0]);
 
 	return temper/100;
 }
@@ -487,8 +482,6 @@ static int max77843_fg_read_current(struct max77843_fuelgauge_data *fuelgauge, i
 	}
 
 	temp = ((data1[1]<<8) | data1[0]) & 0xFFFF;
-	/* Debug log for abnormal current case */
-	pr_info("%s: CURRENT_REG(0x%04x)\n", __func__, temp);
 	if (temp & (0x1 << 15)) {
 		sign = NEGATIVE;
 		temp = (~temp & 0xFFFF) + 1;
@@ -1083,10 +1076,6 @@ static int max77843_get_fuelgauge_soc(struct max77843_fuelgauge_data *fuelgauge)
 	fuelgauge->info.soc = fg_soc;
 
 return_soc:
-	pr_debug("%s: soc(%d), low_batt_alarm(%d)\n",
-		__func__, fuelgauge->info.soc,
-		fuelgauge->info.is_low_batt_alarm);
-
 	return fg_soc;
 }
 
@@ -1220,7 +1209,6 @@ static void max77843_fg_get_scaled_capacity(
 	union power_supply_propval value;
 
 	psy_do_property("battery", get, POWER_SUPPLY_PROP_ONLINE, value);
-	pr_info("%s : CABLE TYPE(%d)\n", __func__, value.intval);
 
 	if (value.intval != POWER_SUPPLY_TYPE_BATTERY) {
 		int capacity_max;
@@ -1245,8 +1233,6 @@ static void max77843_fg_get_scaled_capacity(
 			     (capacity_max - fuelgauge->pdata->capacity_min));
 
 		if ((fuelgauge->pre_soc / 10) <= (temp / 10)) {
-			pr_info("%s : Change capacity max value(%d -> %d)\n",
-				__func__, fuelgauge->capacity_max, capacity_max);
 			fuelgauge->capacity_max = capacity_max;
 			val->intval = temp;
 		} else {
@@ -1262,19 +1248,11 @@ static void max77843_fg_get_scaled_capacity(
 
 	reg_data = max77843_read_word(fuelgauge->i2c, 0xD0);
 	if (reg_data != fuelgauge->capacity_max) {
-		pr_info("%s : 0xD0 Register Update (%d) -> (%d)\n",
-			__func__, reg_data, fuelgauge->capacity_max);
 		reg_data = fuelgauge->capacity_max;
 		max77843_write_word(fuelgauge->i2c, 0xD0, reg_data);
 	}
 
-	pr_info("%s : PRE SOC(%d), SOC(%d)\n",
-		__func__, fuelgauge->pre_soc, val->intval);
-
 	fuelgauge->pre_soc = val->intval;
-
-	pr_info("%s: scaled capacity (%d.%d)\n",
-		 __func__, val->intval/10, val->intval%10);
 }
 
 /* capacity is integer */
@@ -1282,9 +1260,6 @@ static void max77843_fg_skip_abnormal_capacity(
 	struct max77843_fuelgauge_data *fuelgauge,
 	union power_supply_propval *val)
 {
-	pr_info("%s : NOW(%d), OLD(%d)\n",
-		__func__, val->intval, fuelgauge->capacity_old);
-
 	/* keep SOC stable in abnormal status */
 	if (!fuelgauge->is_charging &&
 		fuelgauge->capacity_old > 0 &&
@@ -1300,9 +1275,6 @@ static void max77843_fg_get_atomic_capacity(
 	struct max77843_fuelgauge_data *fuelgauge,
 	union power_supply_propval *val)
 {
-	pr_info("%s : NOW(%d), OLD(%d)\n",
-		__func__, val->intval, fuelgauge->capacity_old);
-
 	if (fuelgauge->capacity_old < val->intval)
 		val->intval = fuelgauge->capacity_old + 1;
 	else if (fuelgauge->capacity_old > val->intval)
@@ -1346,9 +1318,6 @@ static int max77843_fg_calculate_dynamic_scale(
 		fuelgauge->capacity_old = 100;
 	}
 
-	pr_info("%s: %d is used for capacity_max, capacity(%d)\n",
-		__func__, fuelgauge->capacity_max, capacity);
-
 	return fuelgauge->capacity_max;
 }
 
@@ -1389,8 +1358,6 @@ static void max77843_fg_check_qrtable(struct max77843_fuelgauge_data *fuelgauge)
 			fuelgauge->battery_data->QResidual30) < 0)
 			pr_err("%s: Failed to write QRTABLE30\n", __func__);
 	}
-	pr_info("%s: QRTABLE20_REG(0x%04x), QRTABLE30_REG(0x%04x)\n", __func__,
-		qrtable20, qrtable30);
 }
 
 #if defined(CONFIG_EN_OOPS)
